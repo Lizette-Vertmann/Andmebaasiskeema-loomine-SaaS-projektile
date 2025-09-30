@@ -96,7 +96,9 @@ CREATE TABLE `reviews` (
   `cleanliness` decimal(3,2) DEFAULT NULL CHECK (`cleanliness` BETWEEN 0 AND 5) COMMENT 'Puhtus',
   PRIMARY KEY (`id`),
   KEY `listing_id` (`listing_id`),
-  CONSTRAINT `fk_reviews_listing` FOREIGN KEY (`listing_id`) REFERENCES `listings` (`id`) ON DELETE CASCADE
+  KEY `reviewer_id` (`reviewer_id`),
+  CONSTRAINT `fk_reviews_listing` FOREIGN KEY (`listing_id`) REFERENCES `listings` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_reviews_reviewer` FOREIGN KEY (`reviewer_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 -- --------------------------------------------------------
