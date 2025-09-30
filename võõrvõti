@@ -1,0 +1,193 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.2
+-- https://www.phpmyadmin.net/
+--
+-- Host: db:3306
+-- Generation Time: Sep 30, 2025 at 06:00 PM
+-- Server version: 12.0.2-MariaDB-ubu2404
+-- PHP Version: 8.2.27
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+ /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+ /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+ /*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `airbnb`
+--
+
+-- --------------------------------------------------------
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'User ID',
+  `name` varchar(100) NOT NULL COMMENT 'Full name',
+  `email` varchar(150) NOT NULL COMMENT 'Email address',
+  `password` varchar(255) NOT NULL COMMENT 'Hashed password',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'Account created',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- --------------------------------------------------------
+--
+-- Table structure for table `hosts`
+--
+
+CREATE TABLE `hosts` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Host ID',
+  `user_id` int(11) NOT NULL COMMENT 'Seos kasutajaga',
+  `name` varchar(255) DEFAULT NULL COMMENT 'Hosti nimi',
+  `location` varchar(255) DEFAULT NULL COMMENT 'Asukoht',
+  `is_superhost` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Superhost? 0/1',
+  `response_rate` decimal(5,2) DEFAULT NULL CHECK (`response_rate` BETWEEN 0 AND 100) COMMENT 'Vastamise protsent',
+  `since` date DEFAULT NULL COMMENT 'Liitumise kuupäev',
+  `profile_pic` varchar(255) DEFAULT NULL COMMENT 'Profiilipilt URL',
+  `phone_verified` tinyint(1) NOT NULL DEFAULT 0 COMMENT 'Telefon kinnitatud',
+  `email` varchar(255) DEFAULT NULL COMMENT 'Kontakt email',
+  `about` text DEFAULT NULL COMMENT 'Kirjeldus',
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `fk_hosts_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- --------------------------------------------------------
+--
+-- Table structure for table `listings`
+--
+
+CREATE TABLE `listings` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Unikaalne ID',
+  `name` varchar(255) NOT NULL COMMENT 'Majutuse nimi',
+  `host_id` int(11) UNSIGNED NOT NULL COMMENT 'Host ID',
+  `city` varchar(255) DEFAULT NULL COMMENT 'Linn',
+  `price` decimal(10,2) DEFAULT NULL COMMENT 'Hind öö kohta',
+  `room_type` varchar(255) DEFAULT NULL COMMENT 'Tuba',
+  `accommodates` int(11) DEFAULT NULL COMMENT 'Max külalised',
+  `bedrooms` int(11) DEFAULT NULL COMMENT 'Magamistubade arv',
+  `beds` int(11) DEFAULT NULL COMMENT 'Voodite arv',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_listing_name` (`name`),
+  KEY `host_id` (`host_id`),
+  CONSTRAINT `fk_listings_host` FOREIGN KEY (`host_id`) REFERENCES `hosts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- --------------------------------------------------------
+--
+-- Table structure for table `reviews`
+--
+
+CREATE TABLE `reviews` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Arvustuse ID',
+  `listing_id` int(11) UNSIGNED NOT NULL COMMENT 'Seos listinguga',
+  `reviewer_name` varchar(255) DEFAULT NULL COMMENT 'Arvustaja nimi',
+  `date` date DEFAULT NULL COMMENT 'Arvustuse kuupäev',
+  `rating` decimal(3,2) DEFAULT NULL CHECK (`rating` BETWEEN 0 AND 5) COMMENT 'Hinnang',
+  `comment` text DEFAULT NULL COMMENT 'Kommentaar',
+  `reviewer_id` int(11) UNSIGNED DEFAULT NULL COMMENT 'Arvustaja ID',
+  `reply` text DEFAULT NULL COMMENT 'Hosti vastus',
+  `accuracy` decimal(3,2) DEFAULT NULL CHECK (`accuracy` BETWEEN 0 AND 5) COMMENT 'Täpsus',
+  `cleanliness` decimal(3,2) DEFAULT NULL CHECK (`cleanliness` BETWEEN 0 AND 5) COMMENT 'Puhtus',
+  PRIMARY KEY (`id`),
+  KEY `listing_id` (`listing_id`),
+  CONSTRAINT `fk_reviews_listing` FOREIGN KEY (`listing_id`) REFERENCES `listings` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- --------------------------------------------------------
+--
+-- Table structure for table `bookings`
+--
+
+CREATE TABLE `bookings` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Broneeringu ID',
+  `user_id` int(11) NOT NULL COMMENT 'Külalise ID',
+  `listing_id` int(11) UNSIGNED NOT NULL COMMENT 'Majutuse ID',
+  `check_in` date NOT NULL,
+  `check_out` date NOT NULL,
+  `guests` int(11) NOT NULL COMMENT 'Külaliste arv',
+  `status` enum('pending','confirmed','cancelled') NOT NULL DEFAULT 'pending',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `listing_id` (`listing_id`),
+  CONSTRAINT `fk_bookings_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_bookings_listing` FOREIGN KEY (`listing_id`) REFERENCES `listings` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- --------------------------------------------------------
+--
+-- Table structure for table `amenities`
+--
+
+CREATE TABLE `amenities` (
+  `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'Amenity ID',
+  `name` varchar(100) NOT NULL UNIQUE COMMENT 'Mugavuse nimi',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- --------------------------------------------------------
+--
+-- Table structure for table `listing_amenities`
+--
+
+CREATE TABLE `listing_amenities` (
+  `listing_id` int(11) UNSIGNED NOT NULL,
+  `amenity_id` int(11) UNSIGNED NOT NULL,
+  PRIMARY KEY (`listing_id`, `amenity_id`),
+  CONSTRAINT `fk_la_listing` FOREIGN KEY (`listing_id`) REFERENCES `listings` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_la_amenity` FOREIGN KEY (`amenity_id`) REFERENCES `amenities` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+ /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+ /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+  -- Customers tabel
+CREATE TABLE customers (
+  id INT NOT NULL AUTO_INCREMENT,
+  name VARCHAR(255) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Products tabel
+CREATE TABLE products (
+  id INT NOT NULL AUTO_INCREMENT,
+  name VARCHAR(255) NOT NULL,
+  price DECIMAL(10,2) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Orders tabel koos võõrvõtmega customers.id-le
+CREATE TABLE orders (
+  id INT NOT NULL AUTO_INCREMENT,
+  customer_id INT NOT NULL,
+  order_date DATE DEFAULT CURRENT_DATE,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_orders_customers FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Indeks orders.customer_id
+CREATE INDEX idx_orders_customer_id ON orders(customer_id);
+
+-- Order_items tabel koos võõrvõtmetega orders.id ja products.id-le
+CREATE TABLE order_items (
+  id INT NOT NULL AUTO_INCREMENT,
+  order_id INT NOT NULL,
+  product_id INT NOT NULL,
+  quantity INT NOT NULL DEFAULT 1,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_orderitems_orders FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  CONSTRAINT fk_orderitems_products FOREIGN KEY (product_id) REFERENCES products(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Indeksid order_items.order_id ja order_items.product_id
+CREATE INDEX idx_orderitems_order_id ON order_items(order_id);
+CREATE INDEX idx_orderitems_product_id ON order_items(product_id);
